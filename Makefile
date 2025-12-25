@@ -1,44 +1,47 @@
 .RECIPEPREFIX := >
+.PHONY: setup deps lint test serve-local mlflow-up mlflow-down mlflow-logs train predict-sample
 
-# Use Python 3.11
-# On Windows this uses the Python launcher if available.
-PY_SYS ?= python3.11
 ifeq ($(OS),Windows_NT)
-PY_SYS ?= py -3.11
+PY_BOOTSTRAP := py -3.11
+PY := .venv\Scripts\python.exe
+else
+PY_BOOTSTRAP := python3.11
+PY := .venv/bin/python
 endif
 
-VENV := .venv
-VENV_PY := $(VENV)/bin/python
-ifeq ($(OS),Windows_NT)
-VENV_PY := $(VENV)\Scripts\python.exe
-endif
+COMPOSE := docker compose -f infra/docker-compose.yml
 
-.PHONY: help setup lint fmt test serve-local
+setup: .venv deps
+> $(PY) -m pre_commit install
 
-help:
->@echo Targets:
->@echo "  make setup        Create venv, install deps, install pre-commit hooks"
->@echo "  make lint         Run ruff lint"
->@echo "  make fmt          Run ruff formatter"
->@echo "  make test         Run pytest"
->@echo "  make serve-local  Run FastAPI locally"
+.venv:
+> $(PY_BOOTSTRAP) -m venv .venv
 
-$(VENV):
->$(PY_SYS) -m venv $(VENV)
->$(VENV_PY) -m pip install --upgrade pip
+deps:
+> $(PY) -m pip install --upgrade pip
+> $(PY) -m pip install -r requirements-dev.txt
 
-setup: $(VENV)
->$(VENV_PY) -m pip install -r requirements-dev.txt
->$(VENV_PY) -m pre_commit install
+lint:
+> $(PY) -m ruff check .
+> $(PY) -m ruff format --check .
 
-lint: $(VENV)
->$(VENV_PY) -m ruff check .
+test:
+> $(PY) -m pytest -q
 
-fmt: $(VENV)
->$(VENV_PY) -m ruff format .
+serve-local:
+> $(PY) -m uvicorn serving.app.main:app --host 127.0.0.1 --port 8000
 
-test: $(VENV)
->$(VENV_PY) -m pytest -q
+mlflow-up:
+> $(COMPOSE) up -d --build
 
-serve-local: $(VENV)
->$(VENV_PY) -m uvicorn serving.app.main:app --host 127.0.0.1 --port 8000
+mlflow-down:
+> $(COMPOSE) down -v
+
+mlflow-logs:
+> $(COMPOSE) logs -f mlflow
+
+train:
+> $(PY) training/train.py
+
+predict-sample:
+> $(PY) training/predict_sample.py

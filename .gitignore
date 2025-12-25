@@ -22,3 +22,10 @@ crash.log
 .DS_Store
 .idea/
 .vscode/
+
+# MLflow local artifacts and training artifacts
+mlruns/
+training/artifacts/
+
+# Docker compose local volumes (rarely appear, but safe)
+**/.docker/
