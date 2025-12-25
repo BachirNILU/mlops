@@ -14,3 +14,13 @@ make setup
 make lint
 make test
 make serve-local
+
+## Training (M1) commands
+
+```powershell
+make setup
+make mlflow-up
+# open http://localhost:5000
+make train
+make predict-sample
+make mlflow-down
