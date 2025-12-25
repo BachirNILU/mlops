@@ -1,40 +1,44 @@
+.RECIPEPREFIX := >
 
----
+# Use Python 3.11
+# On Windows this uses the Python launcher if available.
+PY_SYS ?= python3.11
+ifeq ($(OS),Windows_NT)
+PY_SYS ?= py -3.11
+endif
 
-#### `Makefile`
-```makefile
-SHELL := /usr/bin/env bash
-.DEFAULT_GOAL := help
-
-PYTHON ?= python3.11
 VENV := .venv
-BIN := $(VENV)/bin
+VENV_PY := $(VENV)/bin/python
+ifeq ($(OS),Windows_NT)
+VENV_PY := $(VENV)\Scripts\python.exe
+endif
 
-.PHONY: help
+.PHONY: help setup lint fmt test serve-local
+
 help:
-	@awk 'BEGIN {FS = ":.*##"; printf "\nTargets:\n"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+>@echo Targets:
+>@echo "  make setup        Create venv, install deps, install pre-commit hooks"
+>@echo "  make lint         Run ruff lint"
+>@echo "  make fmt          Run ruff formatter"
+>@echo "  make test         Run pytest"
+>@echo "  make serve-local  Run FastAPI locally"
 
 $(VENV):
-	$(PYTHON) -m venv $(VENV)
-	$(BIN)/python -m pip install --upgrade pip
+>$(PY_SYS) -m venv $(VENV)
+>$(VENV_PY) -m pip install --upgrade pip
 
-.PHONY: setup
-setup: $(VENV) ## Install dev dependencies and pre-commit hooks
-	$(BIN)/pip install -r requirements-dev.txt
-	$(BIN)/pre-commit install
+setup: $(VENV)
+>$(VENV_PY) -m pip install -r requirements-dev.txt
+>$(VENV_PY) -m pre_commit install
 
-.PHONY: lint
-lint: ## Ruff lint
-	$(BIN)/ruff check .
+lint: $(VENV)
+>$(VENV_PY) -m ruff check .
 
-.PHONY: fmt
-fmt: ## Ruff format (writes changes)
-	$(BIN)/ruff format .
+fmt: $(VENV)
+>$(VENV_PY) -m ruff format .
 
-.PHONY: test
-test: ## Run tests
-	$(BIN)/pytest -q
+test: $(VENV)
+>$(VENV_PY) -m pytest -q
 
-.PHONY: serve-local
-serve-local: $(VENV) ## Run API locally
-	$(BIN)/uvicorn serving.app.main:app --host 127.0.0.1 --port 8000
+serve-local: $(VENV)
+>$(VENV_PY) -m uvicorn serving.app.main:app --host 127.0.0.1 --port 8000
