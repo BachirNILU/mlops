@@ -1,0 +1,40 @@
+minimum_pre_commit_version: "4.0.0"
+
+# Cross-platform: do not hardcode python3.11 here.
+# On Windows, pre-commit will use the Python you run it with (recommended: py -3.11 ...).
+default_language_version:
+  python: python
+
+exclude: |
+  (?x)^(
+    \.venv/|
+    mlruns/|
+    mlartifacts/|
+    infra/terraform/\.terraform/|
+    node_modules/
+  )
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+        args: ["--fix=lf"]
+      - id: check-yaml
+      - id: check-toml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: debug-statements
+      - id: detect-private-key
+      - id: detect-aws-credentials
+        args: ["--allow-missing-credentials"]
+      - id: check-added-large-files
+        args: ["--maxkb=1000"]
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.10
+    hooks:
+      - id: ruff-check
+      - id: ruff-format
