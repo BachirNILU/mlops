@@ -17,29 +17,29 @@ services:
     restart: unless-stopped
 
   minio:
-    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
+    image: minio/minio:latest
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
     ports:
-      - "9000:9000" # S3 endpoint
-      - "9001:9001" # Console UI
+      - "9000:9000"  # S3 endpoint
+      - "9001:9001"  # Console UI
     volumes:
       - minio_data:/data
     restart: unless-stopped
 
   minio-init:
-    image: minio/mc:RELEASE.2025-02-15T10-36-16Z
+    image: minio/mc:latest
     depends_on:
       - minio
     entrypoint: >
       sh -lc "
-      echo 'Waiting for MinIO to be reachable...';
+      echo 'Waiting for MinIO...';
       until mc alias set local http://minio:9000 minioadmin minioadmin 2>/dev/null; do
         sleep 2;
       done;
-      echo 'Creating bucket s3://mlflow (if missing)...';
+      echo 'Creating bucket mlflow (if missing)...';
       mc mb -p local/mlflow || true;
       echo 'MinIO init done.';
       "
@@ -57,11 +57,14 @@ services:
     environment:
       MLFLOW_DISABLE_TELEMETRY: "true"
 
-      # MLflow server uses MinIO via internal docker network
+      # S3 artifacts to MinIO
       MLFLOW_S3_ENDPOINT_URL: "http://minio:9000"
       AWS_ACCESS_KEY_ID: "minioadmin"
       AWS_SECRET_ACCESS_KEY: "minioadmin"
       AWS_DEFAULT_REGION: "us-east-1"
+
+      # Allow docker service hostnames in Host header checks
+      MLFLOW_SERVER_ALLOWED_HOSTS: "localhost:*,127.0.0.1:*,mlflow:*,host.docker.internal:*"
     ports:
       - "5000:5000"
     command: >
@@ -71,6 +74,40 @@ services:
       --backend-store-uri postgresql://mlflow:mlflow@postgres:5432/mlflow
       --default-artifact-root s3://mlflow/
     restart: unless-stopped
+
+  api:
+    profiles: ["app"]
+    build:
+      context: ..
+      dockerfile: serving/Dockerfile
+    environment:
+      MLFLOW_TRACKING_URI: "http://mlflow:5000"
+      MLFLOW_S3_ENDPOINT_URL: "http://minio:9000"
+      AWS_ACCESS_KEY_ID: "minioadmin"
+      AWS_SECRET_ACCESS_KEY: "minioadmin"
+      AWS_DEFAULT_REGION: "us-east-1"
+      MODEL_NAME: "iris-fastai"
+      MODEL_STAGE: "Production"
+    ports:
+      - "8001:8000"
+    depends_on:
+      - mlflow
+    restart: unless-stopped
+
+  trainer:
+    profiles: ["tools"]
+    build:
+      context: ..
+      dockerfile: training/Dockerfile
+    environment:
+      MLFLOW_TRACKING_URI: "http://mlflow:5000"
+      MLFLOW_S3_ENDPOINT_URL: "http://minio:9000"
+      AWS_ACCESS_KEY_ID: "minioadmin"
+      AWS_SECRET_ACCESS_KEY: "minioadmin"
+      AWS_DEFAULT_REGION: "us-east-1"
+    depends_on:
+      - mlflow
+    command: ["python", "training/train.py"]
 
 volumes:
   pgdata:

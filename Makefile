@@ -1,5 +1,10 @@
 .RECIPEPREFIX := >
-.PHONY: setup deps lint test serve-local mlflow-up mlflow-down mlflow-logs train predict-sample
+.PHONY: setup deps fmt lint test serve-local \
+        mlflow-up mlflow-down mlflow-reset mlflow-logs \
+        stack-up stack-down stack-reset stack-logs \
+        train predict-sample \
+        train-docker api-docker-up api-docker-down api-docker-logs \
+        demo-docker demo-test
 
 ifeq ($(OS),Windows_NT)
 PY_BOOTSTRAP := py -3.11
@@ -11,6 +16,10 @@ endif
 
 COMPOSE := docker compose -f infra/docker-compose.yml
 
+# Dockerized API is exposed on host port 8001 (container port 8000)
+API_HOST ?= 127.0.0.1
+API_PORT ?= 8001
+
 setup: .venv deps
 > $(PY) -m pre_commit install
 
@@ -21,9 +30,12 @@ deps:
 > $(PY) -m pip install --upgrade pip
 > $(PY) -m pip install -r requirements-dev.txt
 
+fmt:
+> $(PY) -m ruff check --fix .
+> $(PY) -m ruff format .
+
 lint:
 > $(PY) -m ruff check .
-> $(PY) -m ruff format --check .
 
 test:
 > $(PY) -m pytest -q
@@ -31,17 +43,51 @@ test:
 serve-local:
 > $(PY) -m uvicorn serving.app.main:app --host 127.0.0.1 --port 8000
 
+# ---- MLflow stack (infra) ----
 mlflow-up:
 > $(COMPOSE) up -d --build
 
 mlflow-down:
+> $(COMPOSE) down
+
+mlflow-reset:
 > $(COMPOSE) down -v
 
 mlflow-logs:
 > $(COMPOSE) logs -f mlflow
 
+# Friendlier aliases (same as mlflow-*)
+stack-up: mlflow-up
+stack-down: mlflow-down
+stack-reset: mlflow-reset
+stack-logs:
+> $(COMPOSE) logs -f --tail 200
+
+# ---- Local training (runs on your venv, talks to MLflow if env vars set) ----
 train:
 > $(PY) training/train.py
 
 predict-sample:
 > $(PY) training/predict_sample.py
+
+# ---- Docker training + serving ----
+train-docker:
+> $(COMPOSE) --profile tools run --rm trainer
+
+api-docker-up:
+> $(COMPOSE) --profile app up -d --build api
+
+api-docker-down:
+> $(COMPOSE) --profile app down
+
+api-docker-logs:
+> $(COMPOSE) logs -f api
+
+# ---- One-command demo ----
+# Brings up infra, trains (registers model), then starts API
+demo-docker: mlflow-up train-docker api-docker-up
+
+# Smoke test the dockerized API (Windows-friendly curl.exe)
+demo-test:
+> curl.exe http://$(API_HOST):$(API_PORT)/health
+> curl.exe -X POST http://$(API_HOST):$(API_PORT)/predict -H "Content-Type: application/json" -d "{\"sepal_length\":5.1,\"sepal_width\":3.5,\"petal_length\":1.4,\"petal_width\":0.2}"
