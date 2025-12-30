@@ -3,15 +3,18 @@
         mlflow-up mlflow-down mlflow-reset mlflow-logs \
         stack-up stack-down stack-reset stack-logs \
         train predict-sample \
-        train-docker api-docker-up api-docker-down api-docker-logs \
+        train-docker-build train-docker \
+        api-docker-build api-docker-up api-docker-down api-docker-logs \
         demo-docker demo-test
 
 ifeq ($(OS),Windows_NT)
 PY_BOOTSTRAP := py -3.11
 PY := .venv\Scripts\python.exe
+CURL := curl.exe
 else
 PY_BOOTSTRAP := python3.11
 PY := .venv/bin/python
+CURL := curl
 endif
 
 COMPOSE := docker compose -f infra/docker-compose.yml
@@ -63,19 +66,26 @@ stack-reset: mlflow-reset
 stack-logs:
 > $(COMPOSE) logs -f --tail 200
 
-# ---- Local training (runs on your venv, talks to MLflow if env vars set) ----
+# ---- Local training (runs on your venv) ----
 train:
 > $(PY) training/train.py
 
 predict-sample:
 > $(PY) training/predict_sample.py
 
-# ---- Docker training + serving ----
+# ---- Docker training ----
+train-docker-build:
+> $(COMPOSE) --profile tools build trainer
+
 train-docker:
 > $(COMPOSE) --profile tools run --rm trainer
 
+# ---- Docker serving ----
+api-docker-build:
+> $(COMPOSE) --profile app build api
+
 api-docker-up:
-> $(COMPOSE) --profile app up -d --build api
+> $(COMPOSE) --profile app up -d api
 
 api-docker-down:
 > $(COMPOSE) --profile app down
@@ -84,10 +94,10 @@ api-docker-logs:
 > $(COMPOSE) logs -f api
 
 # ---- One-command demo ----
-# Brings up infra, trains (registers model), then starts API
-demo-docker: mlflow-up train-docker api-docker-up
+# Brings up infra, rebuilds images (if needed), trains (registers model), then starts API
+demo-docker: mlflow-up train-docker-build train-docker api-docker-build api-docker-up
 
-# Smoke test the dockerized API (Windows-friendly curl.exe)
+# Smoke test the dockerized API (cross-platform curl)
 demo-test:
-> curl.exe http://$(API_HOST):$(API_PORT)/health
-> curl.exe -X POST http://$(API_HOST):$(API_PORT)/predict -H "Content-Type: application/json" -d "{\"sepal_length\":5.1,\"sepal_width\":3.5,\"petal_length\":1.4,\"petal_width\":0.2}"
+> $(CURL) http://$(API_HOST):$(API_PORT)/health
+> $(CURL) -X POST http://$(API_HOST):$(API_PORT)/predict -H "Content-Type: application/json" -d "{\"sepal_length\":5.1,\"sepal_width\":3.5,\"petal_length\":1.4,\"petal_width\":0.2}"
