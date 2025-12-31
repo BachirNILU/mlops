@@ -4,14 +4,19 @@ from pydantic import BaseModel, Field
 
 
 class PredictRequest(BaseModel):
-    sepal_length: float = Field(..., example=5.1)
-    sepal_width: float = Field(..., example=3.5)
-    petal_length: float = Field(..., example=1.4)
-    petal_width: float = Field(..., example=0.2)
+    sepal_length: float = Field(..., ge=0)
+    sepal_width: float = Field(..., ge=0)
+    petal_length: float = Field(..., ge=0)
+    petal_width: float = Field(..., ge=0)
 
 
 class PredictResponse(BaseModel):
     predicted_class: str
-    class_index: int
-    probabilities: list[float]
-    model_uri: str
+    probabilities: dict[str, float]
+    model_uri: str | None = None
+
+
+class HealthResponse(BaseModel):
+    status: str
+    model_loaded: bool
+    model_uri: str | None = None

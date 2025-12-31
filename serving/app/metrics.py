@@ -1,45 +1,21 @@
 from __future__ import annotations
 
-import time
-from contextlib import contextmanager
+from prometheus_client import Counter, Histogram
 
-from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
-
-REQUEST_COUNT = Counter(
+# These names match what your tests look for
+API_REQUESTS_TOTAL = Counter(
     "api_requests_total",
-    "Total number of HTTP requests",
+    "Total number of API requests",
     ["endpoint", "method", "http_status"],
 )
 
-PREDICTION_COUNT = Counter(
+MODEL_PREDICTIONS_TOTAL = Counter(
     "model_predictions_total",
-    "Total number of predictions produced by the model",
+    "Total number of model predictions",
+    ["model_name"],
 )
 
-REQUEST_LATENCY = Histogram(
-    "api_request_latency_seconds",
-    "Request latency in seconds",
-    ["endpoint"],
+PREDICTION_LATENCY_SECONDS = Histogram(
+    "prediction_latency_seconds",
+    "Latency for model prediction endpoint in seconds",
 )
-
-
-@contextmanager
-def track_request(endpoint: str):
-    start = time.perf_counter()
-    status = "500"
-    try:
-        yield lambda s: _set_status(s)
-        status = "200"
-    finally:
-        elapsed = time.perf_counter() - start
-        REQUEST_LATENCY.labels(endpoint=endpoint).observe(elapsed)
-        REQUEST_COUNT.labels(endpoint=endpoint, method="POST", http_status=status).inc()
-
-
-def _set_status(_status: int) -> None:
-    # kept for future flexibility
-    return
-
-
-def render_metrics() -> tuple[bytes, str]:
-    return generate_latest(), CONTENT_TYPE_LATEST
