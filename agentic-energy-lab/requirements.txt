@@ -1,0 +1,18 @@
+# Core lab (scripts 00-10, 12-15). Python 3.11+ (tested on 3.13).
+# Versions checked on PyPI on 2026-11-09 and tested together in mock mode.
+pydantic==2.14.3
+anthropic==2.7.0
+numpy==2.5.4
+pandas==3.1.1
+scikit-learn==1.9.1
+python-dotenv==1.2.4
+rank-bm25==0.2.2
+chromadb==1.5.9
+langgraph==1.2.20
+mcp==2.3.0
+agent-framework-core==1.25.0
+langfuse==5.2.0
+fastapi==0.162.2
+uvicorn==0.54.0
+httpx==0.28.1
+pytest==9.2.0

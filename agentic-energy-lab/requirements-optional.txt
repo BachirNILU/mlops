@@ -1,0 +1,10 @@
+# Optional extras. Install with: pip install -r requirements-optional.txt
+# Real-mode embeddings and reranker run locally (no API cost, ~150 MB of model downloads):
+fastembed==0.9.1
+# pgvector store (script 05), needs a Postgres with the vector extension (docker compose up -d db):
+psycopg[binary]==3.3.3
+pgvector==0.5.1
+# Azure AI Search store (script 05) and Azure AI Foundry client (script 10 --real):
+azure-search-documents==12.0.0
+azure-identity==1.27.0
+agent-framework-foundry==1.16.1
