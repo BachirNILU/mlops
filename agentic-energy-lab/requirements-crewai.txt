@@ -1,0 +1,5 @@
+# Script 11 only, in its OWN virtual environment:
+# crewai 1.15.39 pins pydantic 2.12.x and mcp 1.x, which conflict with requirements.txt.
+crewai==1.15.39
+pandas==3.1.1
+python-dotenv==1.2.4

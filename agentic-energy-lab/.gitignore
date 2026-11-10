@@ -1,0 +1,14 @@
+# secrets
+.env
+*.pem
+# local outputs (traces, memory, chroma db, proposed work orders, eval report)
+runs/
+# python
+__pycache__/
+*.pyc
+.venv/
+.venv-*/
+.pytest_cache/
+# models downloaded by fastembed
+.cache/
+local_cache/

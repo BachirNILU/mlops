@@ -1,0 +1,66 @@
+[
+  {
+    "id": "WO-2025-031",
+    "asset_id": "T2",
+    "date": "2025-03-14",
+    "problem": "Guide bearing temperature rose 1 degC/day for 9 days, reached 66 degC.",
+    "cause": "Cooling water strainer blocked (0.5 bar differential pressure).",
+    "action": "Strainer cleaned. Temperature back to 54 degC within 2 days."
+  },
+  {
+    "id": "WO-2025-058",
+    "asset_id": "T2",
+    "date": "2025-06-20",
+    "problem": "Annual inspection.",
+    "cause": "Planned.",
+    "action": "Strainer cleaned, oil sampled (420 ppm water)."
+  },
+  {
+    "id": "WO-2025-102",
+    "asset_id": "P-101",
+    "date": "2025-11-02",
+    "problem": "Vibration 5.0 mm/s.",
+    "cause": "Impeller fouling.",
+    "action": "Impeller cleaned. Vibration back to 2.6 mm/s."
+  },
+  {
+    "id": "WO-2026-007",
+    "asset_id": "T1",
+    "date": "2026-01-18",
+    "problem": "Oil leak at bearing cover.",
+    "cause": "Worn gasket.",
+    "action": "Gasket replaced."
+  },
+  {
+    "id": "WO-2026-044",
+    "asset_id": "T1",
+    "date": "2026-07-09",
+    "problem": "Annual inspection.",
+    "cause": "Planned.",
+    "action": "No findings."
+  },
+  {
+    "id": "WO-2026-051",
+    "asset_id": "P-101",
+    "date": "2026-08-03",
+    "problem": "Suction strainer differential pressure high.",
+    "cause": "Leaves after storm.",
+    "action": "Strainer cleaned."
+  },
+  {
+    "id": "WO-2026-060",
+    "asset_id": "T2",
+    "date": "2026-08-30",
+    "problem": "Short temperature spike to 63 degC during heat wave.",
+    "cause": "Warm river water.",
+    "action": "None needed, back to normal after 3 days."
+  },
+  {
+    "id": "WO-2026-071",
+    "asset_id": "T2",
+    "date": "2026-09-15",
+    "problem": "Temperature sensor alarm, signal lost.",
+    "cause": "Loose connector.",
+    "action": "Connector tightened."
+  }
+]
